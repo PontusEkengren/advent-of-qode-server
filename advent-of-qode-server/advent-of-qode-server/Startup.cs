@@ -1,15 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Models;
 
 namespace advent_of_qode_server
 {
@@ -26,6 +24,30 @@ namespace advent_of_qode_server
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+            services.AddCors(cors => cors.AddPolicy("AdventOfQode", x =>
+            {
+                x.AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader();
+            }));
+
+            services
+                .AddEntityFrameworkNpgsql()
+                .AddDbContext<AdventContext>(opt =>
+                {
+                    opt.UseNpgsql(Configuration["POSTGRES"],
+                        x =>
+                        {
+                            x.MigrationsAssembly(typeof(Startup).GetTypeInfo().Assembly.GetName().Name);
+                            x.EnableRetryOnFailure(10, TimeSpan.FromSeconds(5), new List<string>());
+                        });
+                });
+
+            services.AddSwaggerGen(x =>
+            {
+                x.SwaggerDoc("v1", new OpenApiInfo { Title = "Advent of Qode", Version = "v1" });
+            });
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -36,16 +58,30 @@ namespace advent_of_qode_server
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+                c.RoutePrefix = string.Empty;
+            });
+
+            InitializeDatabase(app);
+
             app.UseHttpsRedirection();
-
             app.UseRouting();
-
             app.UseAuthorization();
-
+            app.UseCors("Advent of Qode");
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
             });
+        }
+
+
+        private void InitializeDatabase(IApplicationBuilder app)
+        {
+            using var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope();
+            serviceScope.ServiceProvider.GetRequiredService<AdventContext>().Database.Migrate();
         }
     }
 }
