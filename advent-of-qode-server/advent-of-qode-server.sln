@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30621.155
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "advent-of-qode-server", "advent-of-qode-server\advent-of-qode-server.csproj", "{0046349C-E70A-4E43-8468-27E6B78DEC68}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0046349C-E70A-4E43-8468-27E6B78DEC68}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0046349C-E70A-4E43-8468-27E6B78DEC68}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0046349C-E70A-4E43-8468-27E6B78DEC68}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0046349C-E70A-4E43-8468-27E6B78DEC68}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4A0CDA07-DB15-4ED3-B848-80B434793DC9}
+	EndGlobalSection
+EndGlobal
