@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using advent_of_qode_server;
@@ -9,9 +10,10 @@ using advent_of_qode_server;
 namespace advent_of_qode_server.Migrations
 {
     [DbContext(typeof(AdventContext))]
-    partial class AdventContextModelSnapshot : ModelSnapshot
+    [Migration("20201119141732_add_basic_question_model")]
+    partial class add_basic_question_model
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -25,9 +27,6 @@ namespace advent_of_qode_server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
-
-                    b.Property<string>("Answers")
-                        .HasColumnType("text");
 
                     b.Property<int>("Day")
                         .HasColumnType("integer");

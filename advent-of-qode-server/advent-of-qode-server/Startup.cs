@@ -70,7 +70,7 @@ namespace advent_of_qode_server
             app.UseHttpsRedirection();
             app.UseRouting();
             app.UseAuthorization();
-            app.UseCors("Advent of Qode");
+            app.UseCors("AdventOfQode");
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
