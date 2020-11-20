@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Linq;
 using System.Net.Mail;
+using System.Text.RegularExpressions;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace advent_of_qode_server.Controllers
 {
@@ -18,12 +21,14 @@ namespace advent_of_qode_server.Controllers
                 return false;
             }
         }
-        public static bool QuestionMatcher(string answers, string input)
+        public static bool QuestionMatcher(string answersCommaSeparated, string input)
         {
-            if (answers == input)
-                return true;
+            var rgx = new Regex("[^a-zA-Z0-9,]");
+            var inputWashed = rgx.Replace(input, "");
+            var answersWashed = rgx.Replace(answersCommaSeparated, "");
+            var words = answersWashed.Split(',').ToList();
 
-            return false;
+            return words.Any(word => string.Equals(word.ToUpperInvariant(), inputWashed.ToUpperInvariant()));
         }
     }
 }

@@ -25,24 +25,29 @@ namespace advent_of_qode_server.Controllers
         public IEnumerable<LeaderBoardViewModel> GetLeaderBoards()
         {
             var groups = _context.ScoreBoard
-                .ToList()
-                .GroupBy(x =>
-                {
-                    var shortDate = x.Created.ToShortDateString();
-                    return new { shortDateString = shortDate, x.UserEmail };
-                });
+                    .ToList()
+                    .GroupBy(x => x.UserEmail);
 
-            var leaderBoardViewModels = groups.Select(userGroups => userGroups
-                    .OrderBy(x => x.Score)
-                    .FirstOrDefault())
-                .Select(scoreBoard => new LeaderBoardViewModel
-                {
-                    Created = scoreBoard?.Created.ToString("yyyy-MM-dd"),
-                    Email = scoreBoard?.UserEmail,
-                    Score = scoreBoard.Score.ToString()
-                }).ToList();
+            //Remove if user has duplicate entries for that day/question
+            var scores = new List<ScoreBoard>();
+            foreach (var user in groups)
+            {
+                var unique = user.GroupBy(x => x.Question).Select(x => x.OrderByDescending(s => s.Score).First());
+                scores.AddRange(unique);
+            }
 
-            return leaderBoardViewModels;
+            //Add the number of days that the user has completed to the view model
+            var highScores = new List<LeaderBoardViewModel>();
+            var highScoreGroup = scores.GroupBy(x => x.UserEmail);
+            foreach (var user in highScoreGroup)
+            {
+                highScores.Add(new LeaderBoardViewModel { Email = user.Key, Score = user.Sum(u => u.Score), numberOfDays = user.Count()});
+            }
+
+            //Order by number of days then by score
+            highScores = highScores.OrderByDescending(x => x.numberOfDays).ThenBy(x => x.Score).ToList();
+
+            return highScores;
         }
 
 
@@ -50,7 +55,7 @@ namespace advent_of_qode_server.Controllers
         [Route("user")]
         public IEnumerable<ScoreViewModel> GetUserScore(string userId)
         {
-            var scoreViewModel= _context.ScoreBoard.Where(x => x.UserId == userId)
+            var scoreViewModel = _context.ScoreBoard.Where(x => x.UserId == userId)
                 .Select(scoreBoard => new ScoreViewModel
                 {
                     Question = scoreBoard.Question,
@@ -134,8 +139,8 @@ namespace advent_of_qode_server.Controllers
 
     public class LeaderBoardViewModel
     {
-        public string Score { get; set; }
+        public int Score { get; set; }
         public string Email { get; set; }
-        public string Created { get; set; }
+        public int numberOfDays { get; set; }
     }
 }
