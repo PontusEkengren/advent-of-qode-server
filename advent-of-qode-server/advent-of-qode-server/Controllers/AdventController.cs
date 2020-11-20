@@ -41,7 +41,8 @@ namespace advent_of_qode_server.Controllers
             var highScoreGroup = scores.GroupBy(x => x.UserEmail);
             foreach (var user in highScoreGroup)
             {
-                highScores.Add(new LeaderBoardViewModel { Email = user.Key, Score = user.Sum(u => u.Score), numberOfDays = user.Count()});
+                var userCompletedDays = user.Where(u => u.Score != -1).ToList(); //Remove the failed days
+                highScores.Add(new LeaderBoardViewModel { Email = user.Key, Score = userCompletedDays.Sum(u => u.Score), numberOfDays = userCompletedDays.Count() });
             }
 
             //Order by number of days then by score
@@ -92,7 +93,7 @@ namespace advent_of_qode_server.Controllers
         public async Task<IActionResult> CreateUserScore(ScoreInputModel scoreInput)
         {
             if (!Helper.IsValidEmail(scoreInput.Email)) return BadRequest("Email is not valid");
-            if (scoreInput.Score < 1) return BadRequest("Score is not valid");
+            if (scoreInput.Score < -1) return BadRequest("Score is not valid");
             if (!(scoreInput.Question > 0 && scoreInput.Question < 26)) return BadRequest("Question number is not valid");
             if (string.IsNullOrWhiteSpace(scoreInput.UserId)) return BadRequest("UserId is not valid");
 
@@ -103,7 +104,8 @@ namespace advent_of_qode_server.Controllers
                 Created = DateTime.Now,
                 Score = scoreInput.Score,
                 UserEmail = scoreInput.Email,
-                Year = DateTime.Now.Year
+                Year = DateTime.Now.Year,
+                Answerd = true,
             };
 
             try

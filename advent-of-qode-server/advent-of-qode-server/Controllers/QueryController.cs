@@ -37,6 +37,7 @@ namespace advent_of_qode_server.Controllers
             questionViewModel = new QuestionViewModel
             {
                 Question = question != null ? question.Query : "Seems like santa is missing a riddle for this day. Please let the elves know!",
+                Options = question?.Options.Split(','),
                 Day = day
             };
 
@@ -49,14 +50,14 @@ namespace advent_of_qode_server.Controllers
         public async Task<IActionResult> Answer(AnswerInputModel answerInput)
         {
             if (string.IsNullOrWhiteSpace(answerInput.Answer)) return BadRequest("Answer cannot be empty");
-            if (answerInput.Day > DateTime.Now.Day) return BadRequest();
+            if (answerInput.Day != DateTime.Now.Day) return BadRequest();
 
             try
             {
                 var question = await _context.Questions.SingleOrDefaultAsync(x => x.Day == answerInput.Day && x.Year == DateTime.Now.Year);
                 if (question == null) throw new Exception("Seems like santa is missing a riddle for this day. Please let the elves know!");
 
-                var success = Helper.QuestionMatcher(question.Answers,answerInput.Answer);
+                var success = Helper.QuestionMatcher(question.Answer, answerInput.Answer);
                 return Ok(success ? "correct" : "wrong");
             }
             catch (Exception e)
@@ -72,13 +73,17 @@ namespace advent_of_qode_server.Controllers
         {
             if (!(queryInput.Day > 0 && queryInput.Day < 26)) return BadRequest("Day is not valid");
             if (string.IsNullOrWhiteSpace(queryInput.Question)) return BadRequest("Question cannot be empty");
-            if (string.IsNullOrWhiteSpace(queryInput.Answers)) return BadRequest("Answers cannot be empty");
+            if (string.IsNullOrWhiteSpace(queryInput.Answer)) return BadRequest("Answers cannot be empty");
+            if (string.IsNullOrWhiteSpace(queryInput.Options)) return BadRequest("Options cannot be empty");
+            if (!queryInput.Options.Split(',').ToList().Any(option => Helper.QuestionMatcher(queryInput.Answer, option))) return BadRequest("One option has to match the answer");
+
 
             var question = new Question
             {
                 Day = queryInput.Day,
                 Query = queryInput.Question,
-                Answers = queryInput.Answers,
+                Answer = queryInput.Answer,
+                Options = queryInput.Options,
                 Year = DateTime.Now.Year,
             };
 
@@ -101,6 +106,7 @@ namespace advent_of_qode_server.Controllers
     {
         public string Question { get; set; }
         public int Day { get; set; }
+        public string[] Options { get; set; }
     }
 
 
@@ -108,7 +114,8 @@ namespace advent_of_qode_server.Controllers
     {
         public int Day { get; set; }
         public string Question { get; set; }
-        public string Answers { get; set; }
+        public string Answer { get; set; }
+        public string Options { get; set; }
     }
 
     public class AnswerInputModel

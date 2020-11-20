@@ -21,14 +21,13 @@ namespace advent_of_qode_server.Controllers
                 return false;
             }
         }
-        public static bool QuestionMatcher(string answersCommaSeparated, string input)
+        public static bool QuestionMatcher(string answer, string input)
         {
             var rgx = new Regex("[^a-zA-Z0-9,]");
             var inputWashed = rgx.Replace(input, "");
-            var answersWashed = rgx.Replace(answersCommaSeparated, "");
-            var words = answersWashed.Split(',').ToList();
+            var answersWashed = rgx.Replace(answer, "");
 
-            return words.Any(word => string.Equals(word.ToUpperInvariant(), inputWashed.ToUpperInvariant()));
+            return string.Equals(answersWashed.ToUpperInvariant(), inputWashed.ToUpperInvariant());
         }
     }
 }
