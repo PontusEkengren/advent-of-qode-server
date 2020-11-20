@@ -7,7 +7,6 @@ namespace advent_of_qode_server
         public int Id { get; set; }
         public int Year { get; set; }
         public int Question { get; set; }
-        public bool Answerd { get; set; }
         public int Score { get; set; }
         public string UserEmail { get; set; }
         public string UserId{ get; set; }

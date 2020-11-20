@@ -105,7 +105,6 @@ namespace advent_of_qode_server.Controllers
                 Score = scoreInput.Score,
                 UserEmail = scoreInput.Email,
                 Year = DateTime.Now.Year,
-                Answerd = true,
             };
 
             try
