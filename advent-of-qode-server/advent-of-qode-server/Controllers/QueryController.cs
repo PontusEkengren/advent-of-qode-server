@@ -22,7 +22,6 @@ namespace advent_of_qode_server.Controllers
             _logger = logger;
         }
 
-
         [HttpGet]
         public QuestionViewModel GetQuestion(int day)
         {
@@ -77,6 +76,8 @@ namespace advent_of_qode_server.Controllers
             if (string.IsNullOrWhiteSpace(queryInput.Options)) return BadRequest("Options cannot be empty");
             if (!queryInput.Options.Split(',').ToList().Any(option => Helper.QuestionMatcher(queryInput.Answer, option))) return BadRequest("One option has to match the answer");
 
+            if (_context.Questions.SingleOrDefault(x => x.Day == queryInput.Day && x.Year == DateTime.Now.Year) != null)
+                return BadRequest("That day already has a question in the database");
 
             var question = new Question
             {
