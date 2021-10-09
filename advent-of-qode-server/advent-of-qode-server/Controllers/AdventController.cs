@@ -14,7 +14,6 @@ namespace advent_of_qode_server.Controllers
         private AdventContext _context { get; set; }
         private readonly ILogger<AdventController> _logger;
 
-
         public AdventController(ILogger<AdventController> logger, AdventContext context)
         {
             _context = context;

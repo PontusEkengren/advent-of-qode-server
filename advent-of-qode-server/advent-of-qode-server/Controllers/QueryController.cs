@@ -66,6 +66,34 @@ namespace advent_of_qode_server.Controllers
             }
         }
 
+        [HttpPut("edit")]
+        public async Task<IActionResult> EditExistingQuestion(QuestionInputModel queryInput)
+        {
+            if (string.IsNullOrWhiteSpace(queryInput.Question)) return BadRequest("Question cannot be empty");
+            if (string.IsNullOrWhiteSpace(queryInput.Answer)) return BadRequest("Answers cannot be empty");
+            if (string.IsNullOrWhiteSpace(queryInput.Options)) return BadRequest("Options cannot be empty");
+            if (!queryInput.Options.Split(',').ToList().Any(option => Helper.QuestionMatcher(queryInput.Answer, option))) return BadRequest("One option has to match the answer");
+
+            var existingQuestion = _context.Questions.SingleOrDefault(x => x.Day == queryInput.Day && x.Year == DateTime.Now.Year);
+            if (existingQuestion == null)
+                return BadRequest($"This day has no previous question");
+
+            try
+            {
+                existingQuestion.Answer = queryInput.Answer;
+                existingQuestion.Options = queryInput.Options;
+                existingQuestion.Query = queryInput.Question;
+
+                await _context.SaveChangesAsync();
+
+                return Ok(existingQuestion.Day);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+        }
 
         [HttpPost]
         public async Task<IActionResult> CreateQuestion(QuestionInputModel queryInput)
@@ -77,7 +105,7 @@ namespace advent_of_qode_server.Controllers
             if (!queryInput.Options.Split(',').ToList().Any(option => Helper.QuestionMatcher(queryInput.Answer, option))) return BadRequest("One option has to match the answer");
 
             if (_context.Questions.SingleOrDefault(x => x.Day == queryInput.Day && x.Year == DateTime.Now.Year) != null)
-                return BadRequest("That day already has a question in the database");
+                return BadRequest($"That day already has a question in the database for day {queryInput.Day}");
 
             var question = new Question
             {
