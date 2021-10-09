@@ -1,10 +1,11 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using advent_of_qode_server.Domain;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace advent_of_qode_server.Controllers
 {
@@ -13,13 +14,11 @@ namespace advent_of_qode_server.Controllers
     public class QueryController : ControllerBase
     {
         private AdventContext _context { get; set; }
-        private readonly ILogger<QueryController> _logger;
 
 
-        public QueryController(ILogger<QueryController> logger, AdventContext context)
+        public QueryController(AdventContext context)
         {
             _context = context;
-            _logger = logger;
         }
 
         [HttpGet]
@@ -35,8 +34,10 @@ namespace advent_of_qode_server.Controllers
             var question = _context.Questions.SingleOrDefault(x => x.Day == day && x.Year == DateTime.Now.Year);
             questionViewModel = new QuestionViewModel
             {
-                Question = question != null ? question.Query : "Seems like santa is missing a riddle for this day. Please let the elves know!",
-                Options = question?.Options.Split(','),
+                Question = question != null
+                    ? question.Query
+                    : "Seems like santa is missing a riddle for this day. Please let the elves know!",
+                Options = question?.Options.Select(x => x.Text).ToArray(),
                 Day = day
             };
 
@@ -53,8 +54,12 @@ namespace advent_of_qode_server.Controllers
 
             try
             {
-                var question = await _context.Questions.SingleOrDefaultAsync(x => x.Day == answerInput.Day && x.Year == DateTime.Now.Year);
-                if (question == null) throw new Exception("Seems like santa is missing a riddle for this day. Please let the elves know!");
+                var question =
+                    await _context.Questions.SingleOrDefaultAsync(x =>
+                        x.Day == answerInput.Day && x.Year == DateTime.Now.Year);
+                if (question == null)
+                    throw new Exception(
+                        "Seems like santa is missing a riddle for this day. Please let the elves know!");
 
                 var success = Helper.QuestionMatcher(question.Answer, answerInput.Answer);
                 return Ok(success ? "correct" : "wrong");
@@ -69,19 +74,19 @@ namespace advent_of_qode_server.Controllers
         [HttpPut("edit")]
         public async Task<IActionResult> EditExistingQuestion(QuestionInputModel queryInput)
         {
-            if (string.IsNullOrWhiteSpace(queryInput.Question)) return BadRequest("Question cannot be empty");
-            if (string.IsNullOrWhiteSpace(queryInput.Answer)) return BadRequest("Answers cannot be empty");
-            if (string.IsNullOrWhiteSpace(queryInput.Options)) return BadRequest("Options cannot be empty");
-            if (!queryInput.Options.Split(',').ToList().Any(option => Helper.QuestionMatcher(queryInput.Answer, option))) return BadRequest("One option has to match the answer");
+            var badRequestMessage = ValidateInput(queryInput);
+            if (string.IsNullOrEmpty(badRequestMessage) is false)
+                return BadRequest(badRequestMessage);
 
-            var existingQuestion = _context.Questions.SingleOrDefault(x => x.Day == queryInput.Day && x.Year == DateTime.Now.Year);
+            var existingQuestion =
+                _context.Questions.SingleOrDefault(x => x.Day == queryInput.Day && x.Year == DateTime.Now.Year);
             if (existingQuestion == null)
-                return BadRequest($"This day has no previous question");
+                return NotFound("Could not find a question for this day");
 
             try
             {
-                existingQuestion.Answer = queryInput.Answer;
-                existingQuestion.Options = queryInput.Options;
+                existingQuestion.Options = queryInput.Options.Select(x => new Option
+                    { Text = x.Text, IsCorrectAnswer = x.IsCorrectAnswer });
                 existingQuestion.Query = queryInput.Question;
 
                 await _context.SaveChangesAsync();
@@ -98,11 +103,16 @@ namespace advent_of_qode_server.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateQuestion(QuestionInputModel queryInput)
         {
-            if (!(queryInput.Day > 0 && queryInput.Day < 26)) return BadRequest("Day is not valid");
-            if (string.IsNullOrWhiteSpace(queryInput.Question)) return BadRequest("Question cannot be empty");
-            if (string.IsNullOrWhiteSpace(queryInput.Answer)) return BadRequest("Answers cannot be empty");
-            if (string.IsNullOrWhiteSpace(queryInput.Options)) return BadRequest("Options cannot be empty");
-            if (!queryInput.Options.Split(',').ToList().Any(option => Helper.QuestionMatcher(queryInput.Answer, option))) return BadRequest("One option has to match the answer");
+            var badRequestMessage = ValidateInput(queryInput);
+            if (string.IsNullOrEmpty(badRequestMessage) is false)
+                return BadRequest(badRequestMessage);
+
+
+            //if (!(queryInput.Day > 0 && queryInput.Day < 26)) return BadRequest("Day is not valid");
+            //if (string.IsNullOrWhiteSpace(queryInput.Question)) return BadRequest("Question cannot be empty");
+            //if (!queryInput.Options.Any()) return BadRequest("Options cannot be empty");
+            //if (queryInput.Options.Count(x => x.IsCorrectAnswer) != 1)
+            //    return BadRequest("One and only one option has to match the answer");
 
             if (_context.Questions.SingleOrDefault(x => x.Day == queryInput.Day && x.Year == DateTime.Now.Year) != null)
                 return BadRequest($"That day already has a question in the database for day {queryInput.Day}");
@@ -111,8 +121,13 @@ namespace advent_of_qode_server.Controllers
             {
                 Day = queryInput.Day,
                 Query = queryInput.Question,
-                Answer = queryInput.Answer,
-                Options = queryInput.Options,
+                Options = queryInput.Options
+                    .Select(x => new Option
+                    {
+                        Text = x.Text,
+                        IsCorrectAnswer = x.IsCorrectAnswer
+                    })
+                    .ToList(),
                 Year = DateTime.Now.Year,
             };
 
@@ -129,6 +144,18 @@ namespace advent_of_qode_server.Controllers
                 throw;
             }
         }
+
+        private static string? ValidateInput(QuestionInputModel queryInput)
+        {
+            string? badRequestMessage = null;
+            if (!(queryInput.Day > 0 && queryInput.Day < 26)) badRequestMessage = "Day is not valid";
+            if (string.IsNullOrWhiteSpace(queryInput.Question)) badRequestMessage = "Question cannot be empty";
+            if (!queryInput.Options.Any()) badRequestMessage = "Question cannot be empty";
+            if (queryInput.Options.Count(x => x.IsCorrectAnswer) != 1)
+                badRequestMessage = "One and only one option has to match the answer";
+
+            return badRequestMessage;
+        }
     }
 
     public class QuestionViewModel
@@ -143,8 +170,13 @@ namespace advent_of_qode_server.Controllers
     {
         public int Day { get; set; }
         public string Question { get; set; }
-        public string Answer { get; set; }
-        public string Options { get; set; }
+        public IEnumerable<OptionInputModel> Options { get; set; }
+    }
+
+    public class OptionInputModel
+    {
+        public string Text { get; set; }
+        public bool IsCorrectAnswer { get; set; }
     }
 
     public class AnswerInputModel

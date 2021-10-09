@@ -12,12 +12,10 @@ namespace advent_of_qode_server.Controllers
     public class AdventController : ControllerBase
     {
         private AdventContext _context { get; set; }
-        private readonly ILogger<AdventController> _logger;
 
-        public AdventController(ILogger<AdventController> logger, AdventContext context)
+        public AdventController(AdventContext context)
         {
             _context = context;
-            _logger = logger;
         }
 
         [HttpGet]
