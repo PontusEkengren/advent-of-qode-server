@@ -15,7 +15,6 @@ namespace advent_of_qode_server
         {
             modelBuilder.Entity<Question>().HasAlternateKey(q => new {q.Year, q.Day});
             modelBuilder.Entity<Question>().HasKey(q => q.Id);
-
         }
     }
 }
