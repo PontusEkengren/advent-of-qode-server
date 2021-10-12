@@ -85,7 +85,9 @@ namespace advent_of_qode_server.Controllers
 
             try
             {
-                existingQuestion.Options = queryInput.Options.Select(x => new Option{ Text = x.Text, IsCorrectAnswer = x.IsCorrectAnswer });
+                existingQuestion.Options = queryInput.Options
+                    .Select(x => new Option{ Text = x.Text, IsCorrectAnswer = x.IsCorrectAnswer })
+                    .ToList();
                 existingQuestion.Query = queryInput.Question;
 
                 await _context.SaveChangesAsync();

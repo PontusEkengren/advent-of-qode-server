@@ -16,7 +16,6 @@ namespace Tests
 
         public When_creating_a_new_question_with_correct_input()
         {
-            //Arrange
             var adventOptions = new DbContextOptionsBuilder<AdventContext>()
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
@@ -27,7 +26,6 @@ namespace Tests
         [Fact]
         public async void Should_return_successful()
         {
-            //Act
             var queryInput = new QuestionInputModel
             {
                 Day = 1,
@@ -40,8 +38,6 @@ namespace Tests
             };
 
             var response = await _queryController.CreateQuestion(queryInput) as CreatedResult;
-
-            //Assert
             response.StatusCode.Should().Be((int)HttpStatusCode.Created);
         }
     }

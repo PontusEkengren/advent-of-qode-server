@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Net;
 using advent_of_qode_server;
 using advent_of_qode_server.Controllers;
 using advent_of_qode_server.Domain;
@@ -17,47 +16,60 @@ namespace Tests
 
         public When_editing_an_existing_question()
         {
-            //Arrange
             var options = new DbContextOptionsBuilder<AdventContext>()
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
-
             var adventContext = new AdventContext(options);
             adventContext.Questions.Add(new Question
             {
                 Day = 1,
+                Year = DateTime.Now.Year,
                 Query = "Is the sky orange?",
                 Options = new List<Option>
                     {
-                        new Option
+                        new()
                         {
                             IsCorrectAnswer = true,
                             Text = "Sometimes",
                         },
-                        new Option
+                        new()
                         {
                             IsCorrectAnswer = false,
                             Text = "No",
                         }
                     }
             });
-
             adventContext.SaveChanges();
-
             _queryController = new QueryController(adventContext);
         }
 
         [Fact]
-        public async void Should_return_not_found()
+        public async void Should_return_successful()
         {
-            //Act
+            var queryInput = new QuestionInputModel
+            {
+                Day = 1,
+                Question = "Is earth round?",
+                Options = new List<OptionInputModel>
+                {
+                    new() { Text = "Yes", IsCorrectAnswer = true },
+                }
+            };
+
+            var response = await _queryController.EditExistingQuestion(queryInput);
+            response.Should().BeOfType(typeof(OkObjectResult));
+        }
+
+        [Fact]
+        public async void Should_return_not_found_if_entered_wrong_day()
+        {
             var queryInput = new QuestionInputModel
             {
                 Day = 2,
                 Question = "Is earth round?",
                 Options = new List<OptionInputModel>
                 {
-                    new OptionInputModel { Text = "Yes", IsCorrectAnswer = true },
+                    new() { Text = "Yes", IsCorrectAnswer = true },
                 }
             };
 
