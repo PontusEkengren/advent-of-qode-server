@@ -143,14 +143,13 @@ namespace advent_of_qode_server.Controllers
 
         private static string? ValidateInput(QuestionInputModel queryInput)
         {
-            string? badRequestMessage = null;
-            if (!(queryInput.Day > 0 && queryInput.Day < 26)) badRequestMessage = "Day is not valid";
-            if (string.IsNullOrWhiteSpace(queryInput.Question)) badRequestMessage = "Question cannot be empty";
-            if (!queryInput.Options.Any()) badRequestMessage = "Question cannot be empty";
+            if (!(queryInput.Day is > 0 and < 26)) return "Day is not valid";
+            if (string.IsNullOrWhiteSpace(queryInput.Question)) return "Question cannot be empty";
+            if (queryInput?.Options is null || !queryInput.Options.Any()) return "Answer options cannot be empty";
             if (queryInput.Options.Count(x => x.IsCorrectAnswer) != 1)
-                badRequestMessage = "One and only one option has to match the answer";
+                return "One and only one option has to match the answer";
 
-            return badRequestMessage;
+            return null;
         }
     }
 
