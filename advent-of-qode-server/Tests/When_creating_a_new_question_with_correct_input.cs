@@ -12,15 +12,16 @@ namespace Tests
 {
     public class When_creating_a_new_question_with_correct_input
     {
-        private DbContextOptions<AdventContext> _adventOptions;
+        private QueryController _queryController;
 
         public When_creating_a_new_question_with_correct_input()
         {
             //Arrange
-            _adventOptions = new DbContextOptionsBuilder<AdventContext>()
+            var adventOptions = new DbContextOptionsBuilder<AdventContext>()
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
-
+            var adventContext = new AdventContext(adventOptions);
+            _queryController = new QueryController(adventContext);
         }
 
         [Fact]
@@ -38,14 +39,10 @@ namespace Tests
                 }
             };
 
-            await using (var adventContext = new AdventContext(_adventOptions))
-            {
-                var queryController = new QueryController(adventContext);
-                var response = await queryController.CreateQuestion(queryInput) as CreatedResult;
+            var response = await _queryController.CreateQuestion(queryInput) as CreatedResult;
 
-                //Assert
-                response.StatusCode.Should().Be((int)HttpStatusCode.Created);
-            }
+            //Assert
+            response.StatusCode.Should().Be((int)HttpStatusCode.Created);
         }
     }
 }
