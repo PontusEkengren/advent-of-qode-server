@@ -15,6 +15,10 @@ namespace advent_of_qode_server
         {
             modelBuilder.Entity<Question>().HasAlternateKey(q => new {q.Year, q.Day});
             modelBuilder.Entity<Question>().HasKey(q => q.Id);
+            modelBuilder.Entity<Question>()
+                .HasMany(b => b.Options)
+                .WithOne()
+                .IsRequired();
         }
     }
 }

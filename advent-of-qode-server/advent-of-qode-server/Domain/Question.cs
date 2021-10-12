@@ -6,7 +6,7 @@ namespace advent_of_qode_server.Domain
     {
         public int Id { get; set; }
         public string Query { get; set; }
-        public IEnumerable<Option> Options { get; set; }
+        public List<Option> Options { get; set; }
         public int Day { get; set; }
         public int Year { get; set; }
     }

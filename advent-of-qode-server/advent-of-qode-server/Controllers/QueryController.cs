@@ -15,7 +15,6 @@ namespace advent_of_qode_server.Controllers
     {
         private AdventContext _context { get; set; }
 
-
         public QueryController(AdventContext context)
         {
             _context = context;
