@@ -12,17 +12,15 @@ namespace Tests
 {
     public class When_creating_a_new_question_with_correct_input
     {
-        private readonly QueryController _queryController;
+        private DbContextOptions<AdventContext> _adventOptions;
 
         public When_creating_a_new_question_with_correct_input()
         {
             //Arrange
-            var options = new DbContextOptionsBuilder<AdventContext>()
+            _adventOptions = new DbContextOptionsBuilder<AdventContext>()
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
 
-            var adventContext = new AdventContext(options);
-            _queryController = new QueryController(adventContext);
         }
 
         [Fact]
@@ -35,14 +33,19 @@ namespace Tests
                 Question = "Is Santa Red?",
                 Options = new List<OptionInputModel>
                 {
-                    new OptionInputModel { Text = "No, fabricated by CocaCola!", IsCorrectAnswer = false },
-                    new OptionInputModel { Text = "Certainly", IsCorrectAnswer = true }
+                    new() { Text = "No, fabricated by CocaCola!", IsCorrectAnswer = false },
+                    new() { Text = "Certainly", IsCorrectAnswer = true }
                 }
             };
-            var response = await _queryController.CreateQuestion(queryInput) as CreatedResult;
-           
-            //Assert
-            response.StatusCode.Should().Be((int)HttpStatusCode.Created);
+
+            await using (var adventContext = new AdventContext(_adventOptions))
+            {
+                var queryController = new QueryController(adventContext);
+                var response = await queryController.CreateQuestion(queryInput) as CreatedResult;
+
+                //Assert
+                response.StatusCode.Should().Be((int)HttpStatusCode.Created);
+            }
         }
     }
 }

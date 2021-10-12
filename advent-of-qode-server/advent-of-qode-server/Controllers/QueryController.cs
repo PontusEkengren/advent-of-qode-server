@@ -61,7 +61,7 @@ namespace advent_of_qode_server.Controllers
                     throw new Exception(
                         "Seems like santa is missing a riddle for this day. Please let the elves know!");
 
-                var success = Helper.QuestionMatcher(question.Answer, answerInput.Answer);
+                var success = Helper.QuestionMatcher(question.Options.Single(x => x.IsCorrectAnswer).Text, answerInput.Answer);
                 return Ok(success ? "correct" : "wrong");
             }
             catch (Exception e)
@@ -78,15 +78,14 @@ namespace advent_of_qode_server.Controllers
             if (string.IsNullOrEmpty(badRequestMessage) is false)
                 return BadRequest(badRequestMessage);
 
-            var existingQuestion =
-                _context.Questions.SingleOrDefault(x => x.Day == queryInput.Day && x.Year == DateTime.Now.Year);
+            var questions = _context.Questions.Include(x => x.Options);
+            var existingQuestion = questions.SingleOrDefault(x => x.Day == queryInput.Day && x.Year == DateTime.Now.Year);
             if (existingQuestion == null)
                 return NotFound("Could not find a question for this day");
 
             try
             {
-                existingQuestion.Options = queryInput.Options.Select(x => new Option
-                    { Text = x.Text, IsCorrectAnswer = x.IsCorrectAnswer });
+                existingQuestion.Options = queryInput.Options.Select(x => new Option{ Text = x.Text, IsCorrectAnswer = x.IsCorrectAnswer });
                 existingQuestion.Query = queryInput.Question;
 
                 await _context.SaveChangesAsync();
@@ -106,15 +105,10 @@ namespace advent_of_qode_server.Controllers
             var badRequestMessage = ValidateInput(queryInput);
             if (string.IsNullOrEmpty(badRequestMessage) is false)
                 return BadRequest(badRequestMessage);
-
-
-            //if (!(queryInput.Day > 0 && queryInput.Day < 26)) return BadRequest("Day is not valid");
-            //if (string.IsNullOrWhiteSpace(queryInput.Question)) return BadRequest("Question cannot be empty");
-            //if (!queryInput.Options.Any()) return BadRequest("Options cannot be empty");
-            //if (queryInput.Options.Count(x => x.IsCorrectAnswer) != 1)
-            //    return BadRequest("One and only one option has to match the answer");
-
-            if (_context.Questions.SingleOrDefault(x => x.Day == queryInput.Day && x.Year == DateTime.Now.Year) != null)
+            
+            var questions = _context.Questions.Include(x => x.Options);
+            
+            if (questions.SingleOrDefault(x => x.Day == queryInput.Day && x.Year == DateTime.Now.Year) != null)
                 return BadRequest($"That day already has a question in the database for day {queryInput.Day}");
 
             var question = new Question

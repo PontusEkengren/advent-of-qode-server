@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using advent_of_qode_server;
@@ -9,9 +10,10 @@ using advent_of_qode_server;
 namespace advent_of_qode_server.Migrations
 {
     [DbContext(typeof(AdventContext))]
-    partial class AdventContextModelSnapshot : ModelSnapshot
+    [Migration("20211012145427_remove_answer_column")]
+    partial class remove_answer_column
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

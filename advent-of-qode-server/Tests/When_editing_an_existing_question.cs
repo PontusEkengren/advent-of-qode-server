@@ -26,7 +26,7 @@ namespace Tests
             adventContext.Questions.Add(new Question
             {
                 Day = 1,
-                Answer = "Is sky orange?",
+                Query = "Is the sky orange?",
                 Options = new List<Option>
                     {
                         new Option
