@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using advent_of_qode_server;
 using advent_of_qode_server.Controllers;
 using advent_of_qode_server.Domain;
@@ -58,6 +59,12 @@ namespace Tests
 
             var response = await _queryController.EditExistingQuestion(queryInput);
             response.Should().BeOfType(typeof(OkObjectResult));
+
+            var getResponse = await _queryController.GetQuestion(1) as OkObjectResult;
+            var question = getResponse.Value as QuestionViewModel;
+            question.Question.Should().Be("Is earth round?");
+            question.Options.Length.Should().Be(1);
+            question.Options.Single().Should().Be("Yes");
         }
 
         [Fact]

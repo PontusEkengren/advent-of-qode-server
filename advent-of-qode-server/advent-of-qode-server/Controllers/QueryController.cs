@@ -21,7 +21,7 @@ namespace advent_of_qode_server.Controllers
         }
 
         [HttpGet]
-        public QuestionViewModel GetQuestion(int day)
+        public async Task<IActionResult> GetQuestion(int day)
         {
             var questionViewModel = new QuestionViewModel
             {
@@ -29,7 +29,7 @@ namespace advent_of_qode_server.Controllers
                 Day = day
             };
 
-            if (day > DateTime.Now.Day) return questionViewModel;
+            if (day > DateTime.Now.Day) { return new ObjectResult("Forbidden") { StatusCode = 403,Value = questionViewModel}; }
             var question = _context.Questions.SingleOrDefault(x => x.Day == day && x.Year == DateTime.Now.Year);
             questionViewModel = new QuestionViewModel
             {
@@ -40,7 +40,7 @@ namespace advent_of_qode_server.Controllers
                 Day = day
             };
 
-            return questionViewModel;
+            return Ok(questionViewModel);
         }
 
 

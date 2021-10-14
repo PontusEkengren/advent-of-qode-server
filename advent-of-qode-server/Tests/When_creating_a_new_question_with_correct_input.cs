@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using advent_of_qode_server;
 using advent_of_qode_server.Controllers;
@@ -39,6 +40,11 @@ namespace Tests
 
             var response = await _queryController.CreateQuestion(queryInput) as CreatedResult;
             response.StatusCode.Should().Be((int)HttpStatusCode.Created);
+
+            var getResponse = await _queryController.GetQuestion(1) as OkObjectResult;
+            var question = getResponse.Value as QuestionViewModel;
+            question.Question.Should().Be("Is Santa Red?");
+            question.Options.Length.Should().Be(2);
         }
     }
 }
