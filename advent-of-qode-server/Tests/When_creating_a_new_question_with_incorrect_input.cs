@@ -36,7 +36,7 @@ namespace Tests
                 }
             };
 
-            var response = await _queryController.CreateQuestion(queryInput) as BadRequestObjectResult;
+            var response = await _queryController.AddOrUpdateQuestion(queryInput) as BadRequestObjectResult;
             response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
         }
 
@@ -49,7 +49,7 @@ namespace Tests
                 Question = "Is Santa Real?",
             };
 
-            var response = await _queryController.CreateQuestion(queryInput) as BadRequestObjectResult;
+            var response = await _queryController.AddOrUpdateQuestion(queryInput) as BadRequestObjectResult;
             response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
         }
     }

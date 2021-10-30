@@ -4,8 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using advent_of_qode_server.Domain;
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace advent_of_qode_server.Controllers
 {
@@ -13,10 +15,12 @@ namespace advent_of_qode_server.Controllers
     [Route("[controller]")]
     public class QueryController : ControllerBase
     {
+        private readonly IConfiguration _configuration;
         private AdventContext _context { get; set; }
 
-        public QueryController(AdventContext context)
+        public QueryController(AdventContext context, IConfiguration configuration)
         {
+            _configuration = configuration;
             _context = context;
         }
 
@@ -29,7 +33,6 @@ namespace advent_of_qode_server.Controllers
                 Day = day
             };
 
-            //if (day > DateTime.Now.Day) { return new ObjectResult("Forbidden") { StatusCode = 403,Value = questionViewModel}; }
             var question = _context.Questions
                 .Include(x => x.Options)
                 .SingleOrDefault(x => x.Day == day && x.Year == DateTime.Now.Year);
@@ -71,9 +74,31 @@ namespace advent_of_qode_server.Controllers
             }
         }
 
-        [HttpPut("edit")]
-        public async Task<IActionResult> EditExistingQuestion(QuestionInputModel queryInput)
+
+        [HttpPut]
+        public async Task<IActionResult> AddOrUpdateQuestion(QuestionInputModel queryInput)
         {
+            try
+            {
+                var token = HttpContext.Request.Headers["Authorization"];
+                var admin = await GoogleJsonWebSignature.ValidateAsync(token,
+                    new GoogleJsonWebSignature.ValidationSettings
+                    {
+                        Audience = new[] { _configuration.GetSection("Authentication:Google:ClientId").Value }
+                    });
+
+                if (!_configuration.GetSection("Uniqode:Admins").Value.Contains(admin.Email))
+                {
+                    return StatusCode(401);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return StatusCode(401);
+            }
+
+
             var badRequestMessage = ValidateInput(queryInput);
             if (string.IsNullOrEmpty(badRequestMessage) is false)
                 return BadRequest(badRequestMessage);
@@ -81,58 +106,25 @@ namespace advent_of_qode_server.Controllers
             var questions = _context.Questions.Include(x => x.Options);
             var existingQuestion = questions.SingleOrDefault(x => x.Day == queryInput.Day && x.Year == DateTime.Now.Year);
             if (existingQuestion == null)
-                return NotFound("Could not find a question for this day");
+            {
+                existingQuestion = new Question
+                {
+                    Day = queryInput.Day,
+                    Year = DateTime.Now.Year,
+                };
+                _context.Questions.Add(existingQuestion);
+            }
 
             try
             {
                 existingQuestion.Options = queryInput.Options
-                    .Select(x => new Option{ Text = x.Text, IsCorrectAnswer = x.IsCorrectAnswer })
+                    .Select(x => new Option { Text = x.Text, IsCorrectAnswer = x.IsCorrectAnswer })
                     .ToList();
                 existingQuestion.Query = queryInput.Question;
 
                 await _context.SaveChangesAsync();
 
                 return Ok(existingQuestion.Day);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
-            }
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> CreateQuestion(QuestionInputModel queryInput)
-        {
-            var badRequestMessage = ValidateInput(queryInput);
-            if (string.IsNullOrEmpty(badRequestMessage) is false)
-                return BadRequest(badRequestMessage);
-            
-            var questions = _context.Questions.Include(x => x.Options);
-            
-            if (questions.SingleOrDefault(x => x.Day == queryInput.Day && x.Year == DateTime.Now.Year) != null)
-                return BadRequest($"That day already has a question in the database for day {queryInput.Day}");
-
-            var question = new Question
-            {
-                Day = queryInput.Day,
-                Query = queryInput.Question,
-                Options = queryInput.Options
-                    .Select(x => new Option
-                    {
-                        Text = x.Text,
-                        IsCorrectAnswer = x.IsCorrectAnswer
-                    })
-                    .ToList(),
-                Year = DateTime.Now.Year,
-            };
-
-            try
-            {
-                await _context.Questions.AddAsync(question);
-                await _context.SaveChangesAsync();
-
-                return Created("Ok", question);
             }
             catch (Exception e)
             {

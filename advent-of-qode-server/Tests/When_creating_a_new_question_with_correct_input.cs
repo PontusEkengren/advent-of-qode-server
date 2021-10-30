@@ -38,8 +38,8 @@ namespace Tests
                 }
             };
 
-            var response = await _queryController.CreateQuestion(queryInput) as CreatedResult;
-            response.StatusCode.Should().Be((int)HttpStatusCode.Created);
+            var response = await _queryController.AddOrUpdateQuestion(queryInput) as OkObjectResult;
+            response.StatusCode.Should().Be((int)HttpStatusCode.OK);
 
             var getResponse = await _queryController.GetQuestion(1) as OkObjectResult;
             var question = getResponse.Value as QuestionViewModel;

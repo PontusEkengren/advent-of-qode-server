@@ -57,7 +57,7 @@ namespace Tests
                 }
             };
 
-            var response = await _queryController.EditExistingQuestion(queryInput);
+            var response = await _queryController.AddOrUpdateQuestion(queryInput);
             response.Should().BeOfType(typeof(OkObjectResult));
 
             var getResponse = await _queryController.GetQuestion(1) as OkObjectResult;
@@ -65,23 +65,6 @@ namespace Tests
             question.Question.Should().Be("Is earth round?");
             question.Options.Length.Should().Be(1);
             question.Options.Single().Should().Be("Yes");
-        }
-
-        [Fact]
-        public async void Should_return_not_found_if_entered_wrong_day()
-        {
-            var queryInput = new QuestionInputModel
-            {
-                Day = 2,
-                Question = "Is earth round?",
-                Options = new List<OptionInputModel>
-                {
-                    new() { Text = "Yes", IsCorrectAnswer = true },
-                }
-            };
-
-            var response = await _queryController.EditExistingQuestion(queryInput);
-            response.Should().BeOfType(typeof(NotFoundObjectResult));
         }
     }
 }
