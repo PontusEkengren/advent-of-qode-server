@@ -4,8 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using advent_of_qode_server.Domain;
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace advent_of_qode_server.Controllers
 {
@@ -13,16 +15,28 @@ namespace advent_of_qode_server.Controllers
     [Route("[controller]")]
     public class AdminController : ControllerBase
     {
+        private readonly IConfiguration _configuration;
         private AdventContext _context { get; set; }
 
-        public AdminController(AdventContext context)
+        public AdminController(AdventContext context, IConfiguration configuration)
         {
+            _configuration = configuration;
             _context = context;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetQuestion(int day)
+        public async Task<IActionResult> GetQuestion(int day, string token)
         {
+            var admin = await GoogleJsonWebSignature.ValidateAsync(token, new GoogleJsonWebSignature.ValidationSettings
+            {
+                Audience = new[] { _configuration.GetSection("Authentication:Google:ClientId").Value }
+            });
+
+            if (!_configuration.GetSection("Uniqode:Admins").Value.Contains(admin.Email))
+            {
+                return Forbid("You do not have the access to visit santas workshop");
+            }
+
             var question = _context.Questions
                 .Include(x => x.Options)
                 .SingleOrDefault(x => x.Day == day && x.Year == DateTime.Now.Year);
@@ -41,7 +55,6 @@ namespace advent_of_qode_server.Controllers
 
             return Ok(questionViewModel);
         }
-
     }
 
     public class QuestionWithAnswersViewModel
