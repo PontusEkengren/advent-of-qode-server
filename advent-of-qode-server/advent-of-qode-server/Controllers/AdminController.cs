@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using advent_of_qode_server.Domain;
 using Google.Apis.Auth;
+using IdentityServer4.EntityFramework.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -27,15 +28,24 @@ namespace advent_of_qode_server.Controllers
         [HttpGet]
         public async Task<IActionResult> GetQuestion(int day, string token)
         {
-            var admin = await GoogleJsonWebSignature.ValidateAsync(token, new GoogleJsonWebSignature.ValidationSettings
+            try
             {
-                Audience = new[] { _configuration.GetSection("Authentication:Google:ClientId").Value }
-            });
+                var admin = await GoogleJsonWebSignature.ValidateAsync(token, new GoogleJsonWebSignature.ValidationSettings
+                {
+                    Audience = new[] { _configuration.GetSection("Authentication:Google:ClientId").Value }
+                });
 
-            if (!_configuration.GetSection("Uniqode:Admins").Value.Contains(admin.Email))
-            {
-                return Forbid("You do not have the access to visit santas workshop");
+                if (!_configuration.GetSection("Uniqode:Admins").Value.Contains(admin.Email))
+                {
+                    return Forbid("You do not have the access to visit santas workshop");
+                }
             }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return StatusCode(403);
+            }
+            
 
             var question = _context.Questions
                 .Include(x => x.Options)
