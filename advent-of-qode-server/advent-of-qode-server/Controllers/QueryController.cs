@@ -29,8 +29,10 @@ namespace advent_of_qode_server.Controllers
                 Day = day
             };
 
-            if (day > DateTime.Now.Day) { return new ObjectResult("Forbidden") { StatusCode = 403,Value = questionViewModel}; }
-            var question = _context.Questions.SingleOrDefault(x => x.Day == day && x.Year == DateTime.Now.Year);
+            //if (day > DateTime.Now.Day) { return new ObjectResult("Forbidden") { StatusCode = 403,Value = questionViewModel}; }
+            var question = _context.Questions
+                .Include(x => x.Options)
+                .SingleOrDefault(x => x.Day == day && x.Year == DateTime.Now.Year);
             questionViewModel = new QuestionViewModel
             {
                 Question = question != null
@@ -42,7 +44,6 @@ namespace advent_of_qode_server.Controllers
 
             return Ok(questionViewModel);
         }
-
 
         [HttpPost]
         [Route("answer")]
