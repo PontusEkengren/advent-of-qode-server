@@ -26,26 +26,27 @@ namespace advent_of_qode_server.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetQuestion(int day, string token)
+        public async Task<IActionResult> GetQuestion(int day)
         {
             try
             {
-                var admin = await GoogleJsonWebSignature.ValidateAsync(token, new GoogleJsonWebSignature.ValidationSettings
-                {
-                    Audience = new[] { _configuration.GetSection("Authentication:Google:ClientId").Value }
-                });
+                var token = HttpContext.Request.Headers["Authorization"];
+                var admin = await GoogleJsonWebSignature.ValidateAsync(token,
+                    new GoogleJsonWebSignature.ValidationSettings
+                    {
+                        Audience = new[] { _configuration.GetSection("Authentication:Google:ClientId").Value }
+                    });
 
                 if (!_configuration.GetSection("Uniqode:Admins").Value.Contains(admin.Email))
                 {
-                    return Forbid("You do not have the access to visit santas workshop");
+                    return StatusCode(401);
                 }
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
-                return StatusCode(403);
+                return StatusCode(401);
             }
-            
 
             var question = _context.Questions
                 .Include(x => x.Options)
