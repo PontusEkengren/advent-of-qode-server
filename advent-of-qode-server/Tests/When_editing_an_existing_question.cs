@@ -7,6 +7,7 @@ using advent_of_qode_server.Domain;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace Tests
@@ -41,7 +42,11 @@ namespace Tests
                     }
             });
             adventContext.SaveChanges();
-            _queryController = new QueryController(adventContext);
+            var fakeConfig = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>())
+                .Build();
+
+            _queryController = new QueryController(adventContext, fakeConfig);
         }
 
         [Fact]
