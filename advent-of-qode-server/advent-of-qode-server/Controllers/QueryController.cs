@@ -138,8 +138,10 @@ namespace advent_of_qode_server.Controllers
             if (!(queryInput.Day is > 0 and < 26)) return "Day is not valid";
             if (string.IsNullOrWhiteSpace(queryInput.Question)) return "Question cannot be empty";
             if (queryInput?.Options is null || !queryInput.Options.Any()) return "Answer options cannot be empty";
-            if (queryInput.Options.Count(x => x.IsCorrectAnswer) != 1)
-                return "One and only one option has to match the answer";
+            if (queryInput.Options.Count(x => x.IsCorrectAnswer) < 1)
+                return "Must have at least one correct answer";
+            if (queryInput.Options.Count(x => x.IsCorrectAnswer) > 1)
+                return "Only one correct answer is allowed";
 
             return null;
         }
