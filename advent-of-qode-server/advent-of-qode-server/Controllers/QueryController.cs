@@ -58,7 +58,9 @@ namespace advent_of_qode_server.Controllers
             try
             {
                 var question =
-                    await _context.Questions.SingleOrDefaultAsync(x =>
+                    await _context.Questions
+                        .Include(x => x.Options)
+                        .SingleOrDefaultAsync(x =>
                         x.Day == answerInput.Day && x.Year == DateTime.Now.Year);
                 if (question == null)
                     throw new Exception(
