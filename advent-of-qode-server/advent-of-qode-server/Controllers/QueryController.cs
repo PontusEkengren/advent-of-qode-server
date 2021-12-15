@@ -54,6 +54,7 @@ namespace advent_of_qode_server.Controllers
         {
             if (string.IsNullOrWhiteSpace(answerInput.Answer)) return BadRequest("Answer cannot be empty");
             if (answerInput.Day != DateTime.Now.Day) return BadRequest();
+            if (answerInput.Time > 10) return Ok("slow");
 
             try
             {
@@ -174,5 +175,6 @@ namespace advent_of_qode_server.Controllers
     {
         public int Day { get; set; }
         public string Answer { get; set; }
+        public int Time { get; set; }
     }
 }
