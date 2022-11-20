@@ -29,14 +29,13 @@ namespace advent_of_qode_server
                 .NoClobber().Load();
 
             services.AddSingleton<IGoogleService, GoogleService>();
-            services.AddControllers();
             services.AddCors(cors => cors.AddPolicy("AdventOfQode", x =>
             {
                 x.AllowAnyOrigin()
                     .AllowAnyMethod()
                     .AllowAnyHeader();
             }));
-
+            services.AddControllers();
             services
                 .AddEntityFrameworkNpgsql()
                 .AddDbContext<AdventContext>(opt =>
@@ -53,7 +52,6 @@ namespace advent_of_qode_server
             {
                 x.SwaggerDoc("v1", new OpenApiInfo { Title = "Advent of Qode", Version = "v1" });
             });
-
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -75,14 +73,13 @@ namespace advent_of_qode_server
 
             app.UseHttpsRedirection();
             app.UseRouting();
-            app.UseAuthorization();
             app.UseCors("AdventOfQode");
+            app.UseAuthorization();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
             });
         }
-
 
         private void InitializeDatabase(IApplicationBuilder app)
         {
