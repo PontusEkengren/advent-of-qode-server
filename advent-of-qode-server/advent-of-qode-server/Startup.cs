@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using advent_of_qode_server.Controllers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +28,7 @@ namespace advent_of_qode_server
                 .TraversePath()
                 .NoClobber().Load();
 
+            services.AddSingleton<IGoogleService, GoogleService>();
             services.AddControllers();
             services.AddCors(cors => cors.AddPolicy("AdventOfQode", x =>
             {

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using advent_of_qode_server;
 using advent_of_qode_server.Controllers;
 using FakeItEasy;
@@ -10,6 +11,7 @@ using Google.Apis.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Primitives;
 using Xunit;
 
 namespace Tests
@@ -24,21 +26,19 @@ namespace Tests
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
             var adventContext = new AdventContext(adventOptions);
-
-            //TODO: Change to Moq? to be able to run this?
-            //The current proxy generator can not intercept the method
-            //Google.Apis.Auth.GoogleJsonWebSignature.ValidateAsync(System.String jwt, Google.Apis.Auth.GoogleJsonWebSignature + ValidationSettings validationSettings) for the following reason:
-            //Static methods can not be intercepted.
-
-            A.CallTo(() =>
-                GoogleJsonWebSignature
-                    .ValidateAsync(A<string>.Ignored, A<GoogleJsonWebSignature.ValidationSettings>.Ignored))
-                .Returns(new GoogleJsonWebSignature.Payload { Email = "test@test.com" });
+            var admin_1 = "admin@admin.se";
             var fakeConfig = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string>())
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    {"Uniqode:Admins",admin_1}
+                })
                 .Build();
 
-            _queryController = new QueryController(adventContext, fakeConfig);
+            var fakeGoogleService = A.Fake<IGoogleService>();
+            A.CallTo(() => fakeGoogleService.GetAdminByToken(A<StringValues>.Ignored, A<string>.Ignored))
+                .Returns(Task.FromResult(admin_1));
+
+            _queryController = new QueryController(adventContext, fakeConfig, fakeGoogleService);
         }
 
         [Fact]
