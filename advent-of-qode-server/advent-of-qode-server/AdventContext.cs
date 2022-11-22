@@ -7,6 +7,7 @@ namespace advent_of_qode_server
     {
         public DbSet<ScoreBoard> ScoreBoard { get; set; }
         public DbSet<Question> Questions { get; set; }
+        public DbSet<StartTime> StartTime { get; set; }
 
         public AdventContext(DbContextOptions<AdventContext> options) : base(options) {}
 

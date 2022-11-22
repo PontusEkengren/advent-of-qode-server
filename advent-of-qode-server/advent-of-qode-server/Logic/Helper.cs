@@ -4,7 +4,7 @@ using System.Net.Mail;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore.Internal;
 
-namespace advent_of_qode_server.Controllers
+namespace advent_of_qode_server.Logic
 {
     public class Helper
     {

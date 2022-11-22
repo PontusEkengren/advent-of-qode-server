@@ -15,12 +15,15 @@ namespace advent_of_qode_server.Controllers
     public class AdminController : ControllerBase
     {
         private readonly IConfiguration _configuration;
+        private readonly IGoogleService _googleService;
+
         private AdventContext _context { get; set; }
 
-        public AdminController(AdventContext context, IConfiguration configuration)
+        public AdminController(AdventContext context, IConfiguration configuration, IGoogleService googleService)
         {
             _configuration = configuration;
             _context = context;
+            _googleService = googleService;
         }
 
         [HttpGet]
@@ -28,14 +31,10 @@ namespace advent_of_qode_server.Controllers
         {
             try
             {
-                var token = HttpContext.Request.Headers["Authorization"];
-                var admin = await GoogleJsonWebSignature.ValidateAsync(token,
-                    new GoogleJsonWebSignature.ValidationSettings
-                    {
-                        Audience = new[] { _configuration.GetSection("Authentication:Google:ClientId").Value }
-                    });
-
-                if (!_configuration.GetSection("Uniqode:Admins").Value.Contains(admin.Email))
+                var googleId = _configuration.GetSection("Authentication:Google:ClientId").Value;
+                var auth = HttpContext?.Request?.Headers["Authorization"] ?? "";
+                var adminEmail = await _googleService.GetEmailByGmailToken(auth, googleId);
+                if (!_configuration.GetSection("Uniqode:Admins").Value.Contains(adminEmail))
                 {
                     return StatusCode(401);
                 }

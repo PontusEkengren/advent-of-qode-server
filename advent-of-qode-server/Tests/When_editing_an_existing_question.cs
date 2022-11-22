@@ -55,7 +55,7 @@ namespace Tests
                 .Build();
 
             var fakeGoogleService = A.Fake<IGoogleService>();
-            A.CallTo(() => fakeGoogleService.GetAdminByToken(A<StringValues>.Ignored, A<string>.Ignored))
+            A.CallTo(() => fakeGoogleService.GetEmailByGmailToken(A<StringValues>.Ignored, A<string>.Ignored))
                 .Returns(Task.FromResult(admin_1));
 
             _queryController = new QueryController(adventContext, fakeConfig, fakeGoogleService);

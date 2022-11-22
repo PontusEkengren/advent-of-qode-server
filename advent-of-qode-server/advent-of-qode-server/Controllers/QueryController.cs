@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using advent_of_qode_server.Domain;
+using advent_of_qode_server.Logic;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +36,31 @@ namespace advent_of_qode_server.Controllers
                 Question = "Careful... You and your eagerness might end up on Santa's naught list!",
                 Day = day
             };
+
+            try
+            {
+                var googleId = _configuration.GetSection("Authentication:Google:ClientId");
+                var auth = HttpContext?.Request?.Headers["Authorization"] ?? "";
+                var email = await _googleService.GetEmailByGmailToken(auth, googleId.Value);
+
+                if (email == null)
+                {
+                    return StatusCode(401, "Kunde inte hitta epost");
+                }
+
+                var startTime = await _context.StartTime.SingleOrDefaultAsync(x => x.UserEmail == email && x.Question == day);
+                if (startTime == null)
+                {
+                    await _context.StartTime
+                        .AddAsync(new StartTime { Started = DateTime.Now, Question = day, UserEmail = email });
+                    await _context.SaveChangesAsync();
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return StatusCode(401);
+            }
 
             var question = _context.Questions
                 .Include(x => x.Options)
@@ -88,7 +114,7 @@ namespace advent_of_qode_server.Controllers
             {
                 var googleId = _configuration.GetSection("Authentication:Google:ClientId");
                 var auth = HttpContext?.Request?.Headers["Authorization"] ?? "";
-                var adminEmail = await _googleService.GetAdminByToken(auth, googleId.Value);
+                var adminEmail = await _googleService.GetEmailByGmailToken(auth, googleId.Value);
                 if (!_configuration.GetSection("Uniqode:Admins").Value.Contains(adminEmail))
                 {
                     return StatusCode(401);

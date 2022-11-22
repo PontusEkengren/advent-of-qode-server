@@ -6,12 +6,12 @@ namespace advent_of_qode_server.Controllers
 {
     public interface IGoogleService
     {
-        public Task<string> GetAdminByToken(StringValues token, string googleAuthIdToken);
+        public Task<string> GetEmailByGmailToken(StringValues token, string googleAuthIdToken);
     }
 
     public class GoogleService : IGoogleService
     {
-        public  async Task<string> GetAdminByToken(StringValues token, string googleAuthIdToken)
+        public  async Task<string> GetEmailByGmailToken(StringValues token, string googleAuthIdToken)
         {
             var result = await GoogleJsonWebSignature.ValidateAsync(token,
             new GoogleJsonWebSignature.ValidationSettings

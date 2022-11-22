@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using advent_of_qode_server;
@@ -11,9 +12,11 @@ using advent_of_qode_server;
 namespace adventofqodeserver.Migrations
 {
     [DbContext(typeof(AdventContext))]
-    partial class AdventContextModelSnapshot : ModelSnapshot
+    [Migration("20221122183423_start_time_for_scoring")]
+    partial class starttimeforscoring
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

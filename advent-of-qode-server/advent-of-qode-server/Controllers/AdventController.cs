@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using advent_of_qode_server.Logic;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -94,12 +95,19 @@ namespace advent_of_qode_server.Controllers
             if (!(scoreInput.Question > 0 && scoreInput.Question < 26)) return BadRequest("Question number is not valid");
             if (string.IsNullOrWhiteSpace(scoreInput.UserId)) return BadRequest("UserId is not valid");
 
+            var startTime = _context.StartTime.SingleOrDefault(x => x.Question == scoreInput.Question && x.UserEmail == scoreInput.Email);
+            if(startTime == null)
+                return NotFound("Unable to find StarTime");
+            
+            var now = DateTime.Now;
+            var timeBasedScore = ScoreCalulator.Calculate(startTime.Started,now);
+
             var scoreBoard = new ScoreBoard
             {
                 UserId = scoreInput.UserId,
                 Question = scoreInput.Question,
                 Created = DateTime.Now,
-                Score = scoreInput.Score,
+                Score = timeBasedScore,
                 UserEmail = scoreInput.Email,
                 Year = DateTime.Now.Year,
             };
