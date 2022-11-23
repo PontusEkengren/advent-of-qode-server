@@ -47,7 +47,7 @@ namespace advent_of_qode_server.Controllers
 
             var question = _context.Questions
                 .Include(x => x.Options)
-                .SingleOrDefault(x => x.Day == day && x.Year == DateTime.Now.Year);
+                .SingleOrDefault(x => x.Day == day && x.Year == DateTime.UtcNow.Year);
             var questionViewModel = new QuestionWithAnswersViewModel
             {
                 Question = question != null

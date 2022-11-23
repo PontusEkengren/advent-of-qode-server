@@ -5,6 +5,7 @@ using System.Net;
 using System.Threading.Tasks;
 using advent_of_qode_server;
 using advent_of_qode_server.Controllers;
+using advent_of_qode_server.Logic;
 using FakeItEasy;
 using FluentAssertions;
 using Google.Apis.Auth;
@@ -37,8 +38,9 @@ namespace Tests
             var fakeGoogleService = A.Fake<IGoogleService>();
             A.CallTo(() => fakeGoogleService.GetEmailByGmailToken(A<StringValues>.Ignored, A<string>.Ignored))
                 .Returns(Task.FromResult(admin_1));
+            var fakeScoreService = A.Fake<IScoreService>();
 
-            _queryController = new QueryController(adventContext, fakeConfig, fakeGoogleService);
+            _queryController = new QueryController(adventContext, fakeConfig, fakeGoogleService, fakeScoreService);
         }
 
         [Fact]

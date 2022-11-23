@@ -35,13 +35,14 @@ namespace Tests
 
 
             _adventContext = new AdventContext(adventOptions);
-            _adventController = new AdventController(_adventContext);
+            var fakeScoreService = A.Fake<IScoreService>();
+            _adventController = new AdventController(_adventContext, fakeScoreService);
         }
 
         [Fact]
-        public async void Should_create_user_score_based_on_worst_time_possible() 
+        public async void Should_create_user_score_based_on_worst_time_possible()
         {
-            _adventController.CreateUserScore(new ScoreInputModel { Email = _admin1, Question = 1, Score= 1, UserId= _admin1 });
+            _adventController.CreateUserScore(new ScoreInputModel { Email = _admin1, Question = 1, Score = 1, UserId = _admin1 });
 
             _adventContext.ScoreBoard.Should().HaveCount(1);
             var score = _adventContext.ScoreBoard.ToList().Single();
@@ -54,14 +55,14 @@ namespace Tests
         [Fact]
         public async void Should_create_user_score_based_on_best_time_possible()
         {
-            var time = DateTime.Now;
+            var time = DateTime.UtcNow;
             ScoreCalulator.Calculate(time, time).Should().Be(207);
         }
 
         [Fact]
         public async void Should_create_user_score_based_on_14_second_time()
         {
-            var time = DateTime.Now;
+            var time = DateTime.UtcNow;
             var startTime = time.AddSeconds(-1);
             ScoreCalulator.Calculate(startTime, time).Should().Be(197);
         }
@@ -70,7 +71,7 @@ namespace Tests
         [Fact]
         public async void Should_create_user_score_based_on_10_second_time()
         {
-            var time = DateTime.Now;
+            var time = DateTime.UtcNow;
             var startTime = time.AddSeconds(-5);
             ScoreCalulator.Calculate(startTime, time).Should().Be(153);
         }
@@ -79,7 +80,7 @@ namespace Tests
         [Fact]
         public async void Should_create_user_score_based_on_5_second_time()
         {
-            var time = DateTime.Now;
+            var time = DateTime.UtcNow;
             var startTime = time.AddSeconds(-10);
             ScoreCalulator.Calculate(startTime, time).Should().Be(98);
         }
@@ -87,7 +88,7 @@ namespace Tests
         [Fact]
         public async void Should_create_user_score_based_on_no_time_left()
         {
-            var time = DateTime.Now;
+            var time = DateTime.UtcNow;
             var startTime = time.AddSeconds(-15);
             ScoreCalulator.Calculate(startTime, time).Should().Be(43);
         }

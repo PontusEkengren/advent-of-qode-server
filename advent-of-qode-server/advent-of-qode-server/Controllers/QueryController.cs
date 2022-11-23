@@ -9,6 +9,7 @@ using Google.Apis.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using static IdentityServer4.Models.IdentityResources;
 
 namespace advent_of_qode_server.Controllers
 {
@@ -18,13 +19,15 @@ namespace advent_of_qode_server.Controllers
     {
         private readonly IConfiguration _configuration;
         private readonly IGoogleService _googleService;
+        private readonly IScoreService _scoreService;
 
         private AdventContext _context { get; set; }
 
-        public QueryController(AdventContext context, IConfiguration configuration, IGoogleService googleService)
+        public QueryController(AdventContext context, IConfiguration configuration, IGoogleService googleService, IScoreService scoreService)
         {
             _configuration = configuration;
             _googleService = googleService;
+            _scoreService = scoreService;
             _context = context;
         }
 
@@ -52,7 +55,7 @@ namespace advent_of_qode_server.Controllers
                 if (startTime == null)
                 {
                     await _context.StartTime
-                        .AddAsync(new StartTime { Started = DateTime.Now, Question = day, UserEmail = email });
+                        .AddAsync(new StartTime { Started = DateTime.UtcNow, Question = day, UserEmail = email });
                     await _context.SaveChangesAsync();
                 }
             }
@@ -64,7 +67,7 @@ namespace advent_of_qode_server.Controllers
 
             var question = _context.Questions
                 .Include(x => x.Options)
-                .SingleOrDefault(x => x.Day == day && x.Year == DateTime.Now.Year);
+                .SingleOrDefault(x => x.Day == day && x.Year == DateTime.UtcNow.Year);
             questionViewModel = new QuestionViewModel
             {
                 Question = question != null
@@ -82,8 +85,31 @@ namespace advent_of_qode_server.Controllers
         public async Task<IActionResult> Answer(AnswerInputModel answerInput)
         {
             if (string.IsNullOrWhiteSpace(answerInput.Answer)) return BadRequest("Answer cannot be empty");
-            if (answerInput.Day != DateTime.Now.Day) return BadRequest();
-            if (answerInput.Time > 10) return Ok("slow");
+            //if (answerInput.Day != DateTime.UtcNow.Day) return BadRequest();
+            //if (answerInput.Time > 10) return Ok("slow");
+            var email = "";
+            try
+            {
+                var googleId = _configuration.GetSection("Authentication:Google:ClientId");
+                var auth = HttpContext?.Request?.Headers["Authorization"] ?? "";
+                email = await _googleService.GetEmailByGmailToken(auth, googleId.Value);
+
+                if (email == null)
+                {
+                    return StatusCode(401, "Kunde inte hitta epost");
+                }
+
+                var scoreRow = await _context.ScoreBoard.SingleOrDefaultAsync(x => x.UserEmail == email && x.Question == answerInput.Day);
+                if (scoreRow != null)
+                {
+                    return BadRequest("Du har redan gissat");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return StatusCode(401);
+            }
 
             try
             {
@@ -91,12 +117,17 @@ namespace advent_of_qode_server.Controllers
                     await _context.Questions
                         .Include(x => x.Options)
                         .SingleOrDefaultAsync(x =>
-                        x.Day == answerInput.Day && x.Year == DateTime.Now.Year);
+                        x.Day == answerInput.Day && x.Year == DateTime.UtcNow.Year);
                 if (question == null)
                     throw new Exception(
                         "Seems like santa is missing a riddle for this day. Please let the elves know!");
 
                 var success = Helper.QuestionMatcher(question.Options.Single(x => x.IsCorrectAnswer).Text, answerInput.Answer);
+                var startTime = _context.StartTime.SingleOrDefault(x => x.Question == answerInput.Day && x.UserEmail == email);
+                if (startTime == null)
+                    return NotFound("Unable to find StarTime");
+                var scoreBoard = await _scoreService.CreateUserScoreAsync(email, startTime.Started, answerInput.Day, success);
+
                 return Ok(success ? "correct" : "wrong");
             }
             catch (Exception e)
@@ -132,13 +163,13 @@ namespace advent_of_qode_server.Controllers
                 return BadRequest(badRequestMessage);
 
             var questions = _context.Questions.Include(x => x.Options);
-            var existingQuestion = questions.SingleOrDefault(x => x.Day == queryInput.Day && x.Year == DateTime.Now.Year);
+            var existingQuestion = questions.SingleOrDefault(x => x.Day == queryInput.Day && x.Year == DateTime.UtcNow.Year);
             if (existingQuestion == null)
             {
                 existingQuestion = new Question
                 {
                     Day = queryInput.Day,
-                    Year = DateTime.Now.Year,
+                    Year = DateTime.UtcNow.Year,
                 };
                 _context.Questions.Add(existingQuestion);
             }
@@ -200,6 +231,5 @@ namespace advent_of_qode_server.Controllers
     {
         public int Day { get; set; }
         public string Answer { get; set; }
-        public int Time { get; set; }
     }
 }

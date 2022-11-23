@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using advent_of_qode_server.Logic;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace advent_of_qode_server.Controllers
@@ -12,11 +13,14 @@ namespace advent_of_qode_server.Controllers
     [Route("[controller]")]
     public class AdventController : ControllerBase
     {
+        private readonly IScoreService _scoreService;
+
         private AdventContext _context { get; set; }
 
-        public AdventController(AdventContext context)
+        public AdventController(AdventContext context, IScoreService scoreService)
         {
             _context = context;
+            _scoreService = scoreService;
         }
 
         [HttpGet]
@@ -43,9 +47,7 @@ namespace advent_of_qode_server.Controllers
                 highScores.Add(new LeaderBoardViewModel { Email = user.Key, Score = userCompletedDays.Sum(u => u.Score), numberOfDays = userCompletedDays.Count() });
             }
 
-            //Order by number of days then by score
-            highScores = highScores.OrderByDescending(x => x.numberOfDays).ThenBy(x => x.Score).ToList();
-
+            highScores = highScores.OrderByDescending(x => x.Score).ThenBy(x => x.numberOfDays).ToList();
             return highScores;
         }
 
@@ -69,9 +71,9 @@ namespace advent_of_qode_server.Controllers
         [Route("debug")]
         public async Task<IActionResult> DebugPost()
         {
-            var scoreBoard = new ScoreBoard { Created = DateTime.Now, Score = 999, UserEmail = "test@gmail.com" };
+            var scoreBoard = new ScoreBoard { Created = DateTime.UtcNow, Score = 999, UserEmail = "test@gmail.com" };
 
-            scoreBoard.Year = DateTime.Now.Year;
+            scoreBoard.Year = DateTime.UtcNow.Year;
 
             try
             {
@@ -94,36 +96,19 @@ namespace advent_of_qode_server.Controllers
             if (scoreInput.Score < -1) return BadRequest("Score is not valid");
             if (!(scoreInput.Question > 0 && scoreInput.Question < 26)) return BadRequest("Question number is not valid");
             if (string.IsNullOrWhiteSpace(scoreInput.UserId)) return BadRequest("UserId is not valid");
+            var scoreRow = await _context.ScoreBoard.SingleOrDefaultAsync(x => x.UserEmail == scoreInput.Email && x.Question == scoreInput.Question);
+            if (scoreRow != null)
+            {
+                return BadRequest("Du har redan gissat");
+            }
 
             var startTime = _context.StartTime.SingleOrDefault(x => x.Question == scoreInput.Question && x.UserEmail == scoreInput.Email);
-            if(startTime == null)
+            if (startTime == null)
                 return NotFound("Unable to find StarTime");
-            
-            var now = DateTime.Now;
-            var timeBasedScore = ScoreCalulator.Calculate(startTime.Started,now);
 
-            var scoreBoard = new ScoreBoard
-            {
-                UserId = scoreInput.UserId,
-                Question = scoreInput.Question,
-                Created = DateTime.Now,
-                Score = timeBasedScore,
-                UserEmail = scoreInput.Email,
-                Year = DateTime.Now.Year,
-            };
+            var scoreBoard = await _scoreService.CreateUserScoreAsync(scoreInput.Email, startTime.Started, scoreInput.Question);
 
-            try
-            {
-                await _context.ScoreBoard.AddAsync(scoreBoard);
-                await _context.SaveChangesAsync();
-
-                return Created("Ok", scoreBoard);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
-            }
+            return Created("Ok", scoreBoard);
         }
     }
 
