@@ -1,18 +1,10 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
 using advent_of_qode_server;
 using advent_of_qode_server.Controllers;
-using advent_of_qode_server.Domain;
 using advent_of_qode_server.Logic;
-using FakeItEasy;
 using FluentAssertions;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Primitives;
 using Xunit;
 
 namespace Tests
@@ -27,16 +19,12 @@ namespace Tests
             var adventOptions = new DbContextOptionsBuilder<AdventContext>()
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
-
-
             _adventContext = new AdventContext(adventOptions);
             _adventContext.StartTime.Add(new StartTime { Started = DateTime.Parse("2022-11-22 00:00"), Question = 1, UserEmail = _admin1 });
             _adventContext.SaveChanges();
 
-
             _adventContext = new AdventContext(adventOptions);
-            var fakeScoreService = A.Fake<IScoreService>();
-            _adventController = new AdventController(_adventContext, fakeScoreService);
+            _adventController = new AdventController(_adventContext, new ScoreService(_adventContext));
         }
 
         [Fact]
@@ -56,7 +44,7 @@ namespace Tests
         public async void Should_create_user_score_based_on_best_time_possible()
         {
             var time = DateTime.UtcNow;
-            ScoreCalulator.Calculate(time, time).Should().Be(207);
+            ScoreCalulator.Calculate(time, time).Should().Be(206);
         }
 
         [Fact]
@@ -64,7 +52,7 @@ namespace Tests
         {
             var time = DateTime.UtcNow;
             var startTime = time.AddSeconds(-1);
-            ScoreCalulator.Calculate(startTime, time).Should().Be(197);
+            ScoreCalulator.Calculate(startTime, time).Should().Be(196);
         }
 
 
@@ -73,7 +61,7 @@ namespace Tests
         {
             var time = DateTime.UtcNow;
             var startTime = time.AddSeconds(-5);
-            ScoreCalulator.Calculate(startTime, time).Should().Be(153);
+            ScoreCalulator.Calculate(startTime, time).Should().Be(152);
         }
 
 
@@ -82,7 +70,7 @@ namespace Tests
         {
             var time = DateTime.UtcNow;
             var startTime = time.AddSeconds(-10);
-            ScoreCalulator.Calculate(startTime, time).Should().Be(98);
+            ScoreCalulator.Calculate(startTime, time).Should().Be(97);
         }
 
         [Fact]
@@ -90,7 +78,7 @@ namespace Tests
         {
             var time = DateTime.UtcNow;
             var startTime = time.AddSeconds(-15);
-            ScoreCalulator.Calculate(startTime, time).Should().Be(43);
+            ScoreCalulator.Calculate(startTime, time).Should().Be(42);
         }
     }
 }

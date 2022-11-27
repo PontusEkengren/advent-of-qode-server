@@ -17,7 +17,7 @@ namespace advent_of_qode_server.Logic
             timeScore = timeScore * _k / 1000;
             var scoreToReduce = (int)Math.Floor(timeScore);
 
-            int maxScore = 207;
+            int maxScore = 206;
             int returnScore = maxScore - scoreToReduce;
             if (returnScore < _m)
                 return (int)_m;
