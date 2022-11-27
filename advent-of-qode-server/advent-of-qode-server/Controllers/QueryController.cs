@@ -51,7 +51,11 @@ namespace advent_of_qode_server.Controllers
                 if (startTime == null)
                 {
                     await _context.StartTime
-                        .AddAsync(new StartTime { Started = DateTime.UtcNow, Question = day, UserEmail = email });
+                        .AddAsync(new StartTime { Started = DateTime.UtcNow, Question = day, UserEmail = email, QuestionSeen = 1 });
+                    await _context.SaveChangesAsync();
+                }else
+                {
+                    startTime.QuestionSeen++; 
                     await _context.SaveChangesAsync();
                 }
             }

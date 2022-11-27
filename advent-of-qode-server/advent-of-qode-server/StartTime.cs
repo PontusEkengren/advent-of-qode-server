@@ -8,5 +8,6 @@ namespace advent_of_qode_server
         public int Question { get; set; }
         public string UserEmail { get; set; }
         public DateTime Started { get; set; }
+        public int QuestionSeen { get; set; }
     }
 }

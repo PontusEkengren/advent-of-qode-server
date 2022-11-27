@@ -20,6 +20,7 @@ namespace Tests
     public class When_creating_a_new_question_with_correct_input
     {
         private QueryController _queryController;
+        string _admin1 = "admin@admin.se";
 
         public When_creating_a_new_question_with_correct_input()
         {
@@ -27,17 +28,16 @@ namespace Tests
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
             var adventContext = new AdventContext(adventOptions);
-            var admin_1 = "admin@admin.se";
             var fakeConfig = new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string>()
                 {
-                    {"Uniqode:Admins",admin_1}
+                    {"Uniqode:Admins",_admin1}
                 })
                 .Build();
 
             var fakeGoogleService = A.Fake<IGoogleService>();
             A.CallTo(() => fakeGoogleService.GetEmailByGmailToken(A<StringValues>.Ignored, A<string>.Ignored))
-                .Returns(Task.FromResult(admin_1));
+                .Returns(Task.FromResult(_admin1));
             var fakeScoreService = A.Fake<IScoreService>();
 
             _queryController = new QueryController(adventContext, fakeConfig, fakeGoogleService, fakeScoreService);
@@ -60,7 +60,7 @@ namespace Tests
             var response = await _queryController.AddOrUpdateQuestion(queryInput) as OkObjectResult;
             response.StatusCode.Should().Be((int)HttpStatusCode.OK);
 
-            var getResponse = await _queryController.GetQuestion(1) as OkObjectResult;
+            var getResponse = await _queryController.GetQuestion(1, _admin1) as OkObjectResult;
             var question = getResponse.Value as QuestionViewModel;
             question.Question.Should().Be("Is Santa Red?");
             question.Options.Length.Should().Be(2);

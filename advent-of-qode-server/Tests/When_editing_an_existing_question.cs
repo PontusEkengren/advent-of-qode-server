@@ -20,6 +20,7 @@ namespace Tests
     public class When_editing_an_existing_question
     {
         private readonly QueryController _queryController;
+        string _admin1 = "admin@admin.se";
 
         public When_editing_an_existing_question()
         {
@@ -47,11 +48,11 @@ namespace Tests
                     }
             });
             adventContext.SaveChanges();
-            var admin_1 = "admin@admin.se";
+            var _admin1 = "admin@admin.se";
             var fakeConfig = new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string>()
                 {
-                    {"Uniqode:Admins",admin_1}
+                    {"Uniqode:Admins",_admin1}
                 })
                 .Build();
 
@@ -59,7 +60,7 @@ namespace Tests
             var fakeScoreService = A.Fake<IScoreService>();
 
             A.CallTo(() => fakeGoogleService.GetEmailByGmailToken(A<StringValues>.Ignored, A<string>.Ignored))
-                .Returns(Task.FromResult(admin_1));
+                .Returns(Task.FromResult(_admin1));
 
             _queryController = new QueryController(adventContext, fakeConfig, fakeGoogleService, fakeScoreService);
         }
@@ -80,7 +81,7 @@ namespace Tests
             var response = await _queryController.AddOrUpdateQuestion(queryInput);
             response.Should().BeOfType(typeof(OkObjectResult));
 
-            var getResponse = await _queryController.GetQuestion(1) as OkObjectResult;
+            var getResponse = await _queryController.GetQuestion(1, _admin1) as OkObjectResult;
             var question = getResponse.Value as QuestionViewModel;
             question.Question.Should().Be("Is earth round?");
             question.Options.Length.Should().Be(1);
