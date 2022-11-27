@@ -32,7 +32,7 @@ namespace advent_of_qode_server.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetQuestion(int day)
+        public async Task<IActionResult> GetQuestion(int day, string email)//Use token validation instead //https://developers.google.com/identity/sign-in/web/backend-auth
         {
             var questionViewModel = new QuestionViewModel
             {
@@ -42,10 +42,6 @@ namespace advent_of_qode_server.Controllers
 
             try
             {
-                var googleId = _configuration.GetSection("Authentication:Google:ClientId");
-                var auth = HttpContext?.Request?.Headers["Authorization"] ?? "";
-                var email = await _googleService.GetEmailByGmailToken(auth, googleId.Value);
-
                 if (email == null)
                 {
                     return StatusCode(401, "Kunde inte hitta epost");
@@ -82,18 +78,14 @@ namespace advent_of_qode_server.Controllers
 
         [HttpPost]
         [Route("answer")]
-        public async Task<IActionResult> Answer(AnswerInputModel answerInput)
+        public async Task<IActionResult> Answer(AnswerInputModel answerInput, string email) //Use token validation instead //https://developers.google.com/identity/sign-in/web/backend-auth
         {
             if (string.IsNullOrWhiteSpace(answerInput.Answer)) return BadRequest("Answer cannot be empty");
             //if (answerInput.Day != DateTime.UtcNow.Day) return BadRequest();
             //if (answerInput.Time > 10) return Ok("slow");
-            var email = "";
+
             try
             {
-                var googleId = _configuration.GetSection("Authentication:Google:ClientId");
-                var auth = HttpContext?.Request?.Headers["Authorization"] ?? "";
-                email = await _googleService.GetEmailByGmailToken(auth, googleId.Value);
-
                 if (email == null)
                 {
                     return StatusCode(401, "Kunde inte hitta epost");
